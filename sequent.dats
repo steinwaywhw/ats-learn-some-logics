@@ -1,55 +1,55 @@
 
 staload "sequent.sats"
 
-primplement lemma_lem {a} () = let 
-	prval pf = draxi {mk(a)+nil} {a} ()
-	prval pf = drnegr {nil,mk(a)+nil} {a} pf 
-	prval pf = drdisjr2 {nil,mk(a)+nil} {a,neg(a)} pf 
-	prval pf = drdisjr1 {nil,mk(a \disj neg(a))+nil} {a,neg(a)} pf 
-	prval pf = drcr {nil,mk(a \disj neg(a))+nil+mk(a \disj neg(a))} {a \disj neg(a)} pf 
-in 
-	pf 
-end
+prval _ = $solver_assert lemma_size_nat
+prval _ = $solver_assert lemma_size_empty
+prval _ = $solver_assert lemma_size_add
+prval _ = $solver_assert lemma_car_nat
+prval _ = $solver_assert lemma_elt_eq
 
 
-////
-propdef eqiv (p1: prop, p2: prop) = (p1 -> p2, p2 -> P1)
-//infix <=> 
-stadef == = eqiv
+primplement g3_weakening {g} {d} {aa} (proof) = 
+	case+ proof of 
+	| g3_axi {g}{a} ()                => g3_axi {g+mk(aa)}{a} ()
+	| g3_cut {g}{a}{c} (fst, snd)     => g3_cut {g+mk(aa)}{a}{c} (g3_weakening{g}{mks a}{aa} fst, g3_weakening{g+mk(a)}{mks c}{aa} snd)
+	| g3_conjr {g}{a,b} (fst, snd)    => g3_conjr {g+mk(aa)}{a,b} (g3_weakening{g}{mks a}{aa} fst, g3_weakening{g}{mks b}{aa} snd)
+	| g3_conjl1 {g}{a,b}{c} (proof)   => g3_conjl1 {g+mk(aa)}{a,b}{c} (g3_weakening{g+mk(a)}{mks c}{aa} proof)
+	| g3_conjl2 {g}{a,b}{c} (proof)   => g3_conjl2 {g+mk(aa)}{a,b}{c} (g3_weakening{g+mk(b)}{mks c}{aa} proof)
+	| g3_disjr1 {g}{a,b} (proof)      => g3_disjr1 {g+mk(aa)}{a,b} (g3_weakening{g}{mks a}{aa} proof)
+	| g3_disjr2 {g}{a,b} (proof)      => g3_disjr2 {g+mk(aa)}{a,b} (g3_weakening{g}{mks b}{aa} proof)
+	| g3_disjl {g}{a,b}{c} (fst, snd) => g3_disjl {g+mk(aa)}{a,b}{c} (g3_weakening{g+mk(a)}{mks c}{aa} fst, g3_weakening{g+mk(b)}{mks c}{aa} snd)
+	| g3_implr {g}{a,b} (proof)       => g3_implr {g+mk(aa)}{a,b} (g3_weakening{g+mk(a)}{mks b}{aa} proof)
+	| g3_impll {g}{a,b}{c} (fst, snd) => g3_impll {g+mk(aa)}{a,b}{c} (g3_weakening{g}{mks a}{aa} fst, g3_weakening{g+mk(b)}{mks c}{aa} snd)
+	| g3_negr {g}{a} (proof)          => g3_negr {g+mk(aa)}{a} (g3_weakening{g+mk(a)}{nil}{aa} proof)
+	| g3_negl {g}{a} (proof)          => g3_negl {g+mk(aa)}{a} (g3_weakening{g}{mks a}{aa} proof)
 
-datasort formula = 
-| atom of (prop)
-| conj of (formula, formula)
-| disj of (formula, formula)
-| impl of (formula, formula)
-| neg  of (formula)
+primplement g3_contraction {g} {d} {aa} (proof) = 
+	case+ proof of 
+	| g3_axi {g}{a} ()                => g3_axi {g-mk(aa)}{a} ()
+	| g3_cut {g}{a}{c} (fst, snd)     => g3_cut {g-mk(aa)}{a}{c} (g3_contraction{g}{mks a}{aa} fst, g3_contraction{g+mk(a)}{mks c}{aa} snd)
+	| g3_conjr {g}{a,b} (fst, snd)    => g3_conjr {g-mk(aa)}{a,b} (g3_contraction{g}{mks a}{aa} fst, g3_contraction{g}{mks b}{aa} snd)
+	| g3_conjl1 {g}{a,b}{c} (proof)   => g3_conjl1 {g-mk(aa)}{a,b}{c} (g3_contraction{g+mk(a)}{mks c}{aa} proof)
+	| g3_conjl2 {g}{a,b}{c} (proof)   => g3_conjl2 {g-mk(aa)}{a,b}{c} (g3_contraction{g+mk(b)}{mks c}{aa} proof)
+	| g3_disjr1 {g}{a,b} (proof)      => g3_disjr1 {g-mk(aa)}{a,b} (g3_contraction{g}{mks a}{aa} proof)
+	| g3_disjr2 {g}{a,b} (proof)      => g3_disjr2 {g-mk(aa)}{a,b} (g3_contraction{g}{mks b}{aa} proof)
+	| g3_disjl {g}{a,b}{c} (fst, snd) => g3_disjl {g-mk(aa)}{a,b}{c} (g3_contraction{g+mk(a)}{mks c}{aa} fst, g3_contraction{g+mk(b)}{mks c}{aa} snd)
+	| g3_implr {g}{a,b} (proof)       => g3_implr {g-mk(aa)}{a,b} (g3_contraction{g+mk(a)}{mks b}{aa} proof)
+	| g3_impll {g}{a,b}{c} (fst, snd) => g3_impll {g-mk(aa)}{a,b}{c} (g3_contraction{g}{mks a}{aa} fst, g3_contraction{g+mk(b)}{mks c}{aa} snd)
+	| g3_negr {g}{a} (proof)          => g3_negr {g-mk(aa)}{a} (g3_contraction{g+mk(a)}{nil}{aa} proof)
+	| g3_negl {g}{a} (proof)          => g3_negl {g-mk(aa)}{a} (g3_contraction{g}{mks a}{aa} proof)
 
-datasort seqs = 
-| empty of ()
-| more of (formula, seqs)
+ primplement g3_disjunction {a,b} {c} (proof) = 
+ 	case+ proof of 
+ 	| g3_disjr1 {g}{a,b} (proof) => proof 
+ 	| g3_disjr2 {g}{a,b} (proof) => proof
 
-dataprop seqs_mem (formula, seqs) =
-| {g:seqs} {a:formula} mem_base (a, more (a, g)) of ()
-| {g:seqs} {a1,a2:formula} mem_ind (a1, more (a2, g)) of mem (a1, g)
-
-dataprop seqs_eq (seqs, seqs) = 
-| {g:seqs} seqs_eq (g, g) of ()
-
-praxi lemma_seqs_eq {g1,g2:seqs} ({f:formula} seqs_mem (f, g1) <=> seqs_mem (f, g2)): seqs_eq (g1, g2)
-
-
-////
-dataprop degree (formula, int) = 
-| {a:atom}					  dgatom (atom (a), 1) 					 of ()
-| {a:formula}     {d:nat}     dgneg  (neg a, d + 1)                  of (degree (a, d))
-| {a1,a2:formula} {d1,d2:nat} dgconj (a1 \conj a2, max (d1, d2) + 1) of (degree (a1, d1), degree (a2, d2))
-| {a1,a2:formula} {d1,d2:nat} dgdisj (a1 \disj a2, max (d1, d2) + 1) of (degree (a1, d1), degree (a2, d2))
-| {a1,a2:formula} {d1,d2:nat} dgimpl (a1 \impl a2, max (d1, d2) + 1) of (degree (a1, d1), degree (a2, d2))
-
-dataprop derive (seqs, seqs) = 
-| {a:formula} draxiom (a +> nil, a +> nil) of ()
-| {a:formula} {m,n,p,q:seqs} drcut (m ++ p, n ++ q) of (derive (m, a +> n), derive (p <+ a, q))
- 
-dataprop cutfree_derive (seqs, seqs) = 
-
+//primplement lemma_lem {a} () = let 
+//	prval pf = draxi {a} ()
+//	prval pf = drnegr {nil, mks a} {a} pf 
+//	prval pf = drdisjr2 {nil, mks a} {a, neg(a)} pf 
+//	prval pf = drdisjr1 {nil, mks (a \disj neg(a))} {a, neg(a)} pf 
+//	prval pf = drcr {nil, mk(a \disj neg(a))+mks(a \disj neg(a))} {a \disj neg(a)} pf 
+//in 
+//	lemma_com_disj {nil} {a, neg a} pf 
+//end
 

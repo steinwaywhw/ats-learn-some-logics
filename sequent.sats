@@ -1,97 +1,75 @@
 
-(* bag definition for patsolve_smt *)
-
-datasort BagElt = (* *)
-sortdef elt = BagElt
-
-stacst eq_elt_elt: (elt, elt) -> bool
-stadef == = eq_elt_elt
-stadef neq_elt_elt (a:elt, b:elt) = ~(a==b)
-stadef != = neq_elt_elt
-
-praxi lemma_elt_eq {e:elt} (): [e == e] unit_p
-
-datasort Bag = (* *)
-sortdef bag = Bag 
-
-stacst bag_emp: () -> bag
-stacst bag_add: (bag, elt) -> bag
-stacst bag_del: (bag, elt) -> bag
-stacst bag_rmv: (bag, elt) -> bag
-stacst bag_cap: (bag, bag) -> bag 
-stacst bag_cup: (bag, bag) -> bag
-stacst bag_dif: (bag, bag) -> bag
-stacst bag_jon: (bag, bag) -> bag
-stacst bag_mem: (bag, elt) -> bool
-stacst bag_sub: (bag, bag) -> bool
-stacst bag_eq: (bag, bag) -> bool
-stacst bag_car: (bag, elt) -> int
-
-stadef nil = bag_emp
-stadef add (e:elt, s:bag) = bag_add (s, e)
-stadef + = add 
-stadef + = bag_add
-stadef del = bag_del 
-stadef - = del 
-stadef rmv = bag_rmv
-stadef + = bag_cup
-stadef - = bag_dif
-stadef * = bag_cap
-stadef join = bag_jon
-stadef mem = bag_mem
-stadef sub = bag_sub
-stadef == = bag_eq
-stadef bag_neq (a:bag, b:bag) = ~(a==b)
-stadef != = bag_neq
-stadef car = bag_car
-
-praxi lemma_car_nat {g:bag} {i:elt} (): [car (g, i) >= 0] unit_p
+#include "sequence.hats"
 
 (* sort definition *)
 
 datasort form = 
-| atom of (prop)
+| atom of ()
 | conj of (form, form)
 | disj of (form, form)
 | impl of (form, form)
 | neg  of (form)
 
-sortdef seqs = bag 
-
-datasort seqt = 
-| seqt of (seqs, seqs)
 
 (* element definition for formula *)
 
 stacst mk_elt: form -> elt 
 stadef mk = mk_elt
+stadef mks (f:form) = mk(f) + nil
 
-praxi lemma_elt_fun {i:form} (): [mk(i) == mk(i)] unit_p
+praxi lemma_mk_inj {i:form} (): [mk(i) == mk(i)] unit_p
 
 (* rules *)
 
-dataprop derive (seqt) = 
+dataprop LK (seqt) = 
 (* axiom and cut *)
-| {g:seqs} {a:form|mem(g,mk(a))} draxi (seqt (g, mk(a)+nil)) of ()
-| {g,d,s,p:seqs} {a:form} drcut (seqt (g+s, d+p)) of (derive (seqt (g, mk(a)+d)), derive (seqt (mk(a)+s, p)))
+| {a:form} lk_axi (mks a |- mks a) of ()
+| {g,d:seqs} {s,p:seqs} {a:form} lk_cut (g+s |- d+p) of (LK (g |- d+mk(a)), LK (mk(a)+s |- p))
 (* structural rules *)
-| {g,d:seqs} {a:form} drwl (seqt (mk(a)+g, d)) of (derive (seqt (g, d)))
-| {g,d:seqs} {a:form} drwr (seqt (g, mk(a)+d)) of (derive (seqt (g, d)))
-| {g,d:seqs} {a:form|car(g,mk(a))>1} drcl (seqt (mk(a)+rmv(g,mk(a)), d)) of (derive (seqt (g, d)))
-| {g,d:seqs} {a:form|car(d,mk(a))>1} drcr (seqt (g, mk(a)+rmv(d,mk(a)))) of (derive (seqt (g, d)))
+| {g,d:seqs} {a:form} lk_wl (g+mk(a) |- d) of LK (g |- d)
+| {g,d:seqs} {a:form} lk_wr (g |- mk(a)+d) of LK (g |- d)
+| {g,d:seqs} {a:form|car(g,mk(a))>1} lk_cl ((g \rmv mk(a))+mk(a) |- d) of LK (g |- d)
+| {g,d:seqs} {a:form|car(d,mk(a))>1} lk_cr (g |- (d \rmv mk(a))+mk(a)) of LK (g |- d)
 (* exchange is inexplicit as a property of bag *)
 (* logical rules *)
-| {g,d:seqs} {a,b:form} drconjl1 (seqt (mk(a \conj b)+g, d)) of (derive (seqt (mk(a)+g, d)))
-| {g,d:seqs} {a,b:form} drconjl2 (seqt (mk(a \conj b)+g, d)) of (derive (seqt (mk(b)+g, d)))
-| {g,d:seqs} {a,b:form} drdisjr1 (seqt (g, mk(a \disj b)+d)) of (derive (seqt (g, mk(a)+d)))
-| {g,d:seqs} {a,b:form} drdisjr2 (seqt (g, mk(a \disj b)+d)) of (derive (seqt (g, mk(b)+d)))
-| {g,d,s,p:seqs} {a,b:form} drdisjl (seqt (g+s+mk(a \disj b), d+p)) of (derive (seqt (g+mk(a), d)), derive (seqt (s+mk(b), p)))
-| {g,d,s,p:seqs} {a,b:form} drconjr (seqt (g+s, mk(a \conj b)+d+p)) of (derive (seqt (g, mk(a)+d)), derive (seqt (s, mk(b)+p)))
-| {g,d,s,p:seqs} {a,b:form} drimpll (seqt (g+s+mk(a \impl b), d+p)) of (derive (seqt (g, mk(a)+d)), derive (seqt (s+mk(b), p)))
-| {g,d:seqs} {a,b:form} drimplr (seqt (g, mk(a \impl b)+d)) of (derive (seqt (g+mk(a), mk(b)+d)))
-| {g,d:seqs} {a:form} drnegl (seqt (g+mk(neg a), d)) of (derive (seqt (g, mk(a)+d)))
-| {g,d:seqs} {a:form} drnegr (seqt (g, mk(neg a)+d)) of (derive (seqt (g+mk(a), d)))
+| {g,d:seqs} {a,b:form} lk_conjl1 (g+mk(a \conj b) |- d) of LK (g+mk(a) |- d)
+| {g,d:seqs} {a,b:form} lk_conjl2 (g+mk(a \conj b) |- d) of LK (g+mk(b) |- d)
+| {g,d:seqs} {a,b:form} lk_disjr1 (g |- mk(a \disj b)+d) of LK (g |- mk(a)+d)
+| {g,d:seqs} {a,b:form} lk_disjr2 (g |- mk(a \disj b)+d) of LK (g |- mk(b)+d)
+| {g,d:seqs} {s,p:seqs} {a,b:form} lk_disjl (g+s+mk(a \disj b) |- d+p) of (LK (g+mk(a) |- d), LK (s+mk(b) |- p))
+| {g,d:seqs} {s,p:seqs} {a,b:form} lk_conjr (g+s |- mk(a \conj b)+d+p) of (LK (g |- mk(a)+d), LK (s |- mk(b)+p))
+| {g,d:seqs} {s,p:seqs} {a,b:form} lk_impll (g+s+mk(a \impl b) |- d+p) of (LK (g |- mk(a)+d), LK (s+mk(b) |- p))
+| {g,d:seqs} {a,b:form} lk_implr (g |- mk(a \impl b)+d) of LK (g+mk(a) |- mk(b)+d)
+| {g,d:seqs} {a:form} lk_negl (g+mk(neg a) |- d) of LK (g |- mk(a)+d)
+| {g,d:seqs} {a:form} lk_negr (g |- mk(neg a)+d) of LK (g+mk(a) |- d)
+
+dataprop G3 (seqt) =
+(* axiom *) 
+| {g:seqs} {a:form|mem(g,mk(a))}            		g3_axi (g |- mks a)            		of ()
+(* cut *)
+| {g:seqs} {a:form} {c:form} 						g3_cut (g |- mks c)                 of (G3 (g |- mks a), G3 (g+mk(a) |- mks c))
+(* conjunction *)
+| {g:seqs} {a,b:form} 		   						g3_conjr  (g |- mks (a \conj b))    of (G3 (g |- mks a), G3 (g |- mks b))
+| {g:seqs} {a,b:form|mem(g,mk(a \conj b))} {c:form} g3_conjl1 (g |- mks c) 				of G3 (g+mk(a) |- mks c)
+| {g:seqs} {a,b:form|mem(g,mk(a \conj b))} {c:form} g3_conjl2 (g |- mks c) 				of G3 (g+mk(b) |- mks c)
+(* disjunction *)
+| {g:seqs} {a,b:form}          						g3_disjr1 (g |- mks(a \disj b))     of G3 (g |- mks a)
+| {g:seqs} {a,b:form}          						g3_disjr2 (g |- mks(a \disj b))     of G3 (g |- mks b)
+| {g:seqs} {a,b:form|mem(g,mk(a \disj b))} {c:form} g3_disjl  (g |- mks c) 				of (G3 (g+mk(a) |- mks c), G3 (g+mk(b) |- mks c))
+(* implication *)
+| {g:seqs} {a,b:form} 		   						g3_implr (g |- mks (a \impl b))     of G3 (g+mk(a) |- mks b)
+| {g:seqs} {a,b:form|mem(g,mk(a \impl b))} {c:form} g3_impll (g |- mks c)  				of (G3 (g |- mks a), G3 (g+mk(b) |- mks c))
+(* negation *)
+| {g:seqs} {a:form}            						g3_negr (g |- mks (neg a))          of G3 (g+mk(a) |- nil)
+| {g:seqs} {a:form|mem(g,mk(neg a))}            	g3_negl (g |- nil)         			of G3 (g |- mks a)
+
+prfun g3_weakening {g:seqs} {d:seqs|size(d) <= 1} {a:form} (G3 (g |- d)): G3 (g+mk(a) |- d)
+prfun g3_contraction {g:seqs} {d:seqs|size(d) <= 1} {a:form|car(g,mk(a))>1} (G3 (g |- d)): G3 (g-mk(a) |- d)
+prfun g3_disjunction {a,b:form} {c:form|c==a || c==b} (G3 (nil |- mks (a \disj b))): G3 (nil |- mks c)
 
 
-prfun lemma_lem {a:form} (): derive (seqt (nil, mk(a \disj neg(a))+nil))
+//praxi lemma_com_disj {g:seqs} {a,b:form} (derive (g |- mks (a \disj b))): derive (g |- mks (b \disj a))
+//prfun lemma_lem {a:form} (): derive (nil |- mks (neg(a) \disj a))
+
+//prfun lemma_cut {g,d:seqs} {s,p:seqs} {a:form} (derive (g |- d+mk(a)), derive (mk(a)+s |- p)): derive (g+s |- d+p)
 
