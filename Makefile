@@ -23,8 +23,6 @@ RMF=rm -f
 
 tc: sequent_tc
 
-sequence_tc: sequence.dats
-	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i
 
 
 sequent_tc: sequent.dats 
