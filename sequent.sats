@@ -17,7 +17,14 @@ stacst mk_elt: form -> elt
 stadef mk = mk_elt
 stadef mks (f:form) = mk(f) + nil
 
-praxi lemma_mk_inj {i:form} (): [mk(i) == mk(i)] unit_p
+//stacst eq_form_form: (form, form) -> bool
+//stadef == = eq_form_form
+//stadef neq_form_form (a:form, b:form) = not (a == b)
+//stadef != = neq_form_form
+
+
+praxi lemma_mk_inj {i,j:form|i==j} (): [mk(i)==mk(i)] unit_p
+praxi lemma_mk_bij {i,j:form|not(i==j)} (): [not(mk(i)==mk(j))] unit_p
 
 (* rules *)
 
@@ -61,12 +68,13 @@ dataprop G3 (seqt) =
 | {g:seqs} {a,b:form|mem(g,mk(a \impl b))} {c:form} g3_impll (g |- mks c)  				of (G3 (g |- mks a), G3 (g+mk(b) |- mks c))
 (* negation *)
 | {g:seqs} {a:form}            						g3_negr (g |- mks (neg a))          of G3 (g+mk(a) |- nil)
-| {g:seqs} {a:form|mem(g,mk(neg a))}            	g3_negl (g |- nil)         			of G3 (g |- mks a)
+| {g:seqs} {a:form|mem(g,mk(neg a))} {c:form}       g3_negl (g |- mks c)         		of G3 (g |- mks a)
 
 prfun g3_weakening {g:seqs} {d:seqs|size(d) <= 1} {a:form} (G3 (g |- d)): G3 (g+mk(a) |- d)
 prfun g3_contraction {g:seqs} {d:seqs|size(d) <= 1} {a:form|car(g,mk(a))>1} (G3 (g |- d)): G3 (g-mk(a) |- d)
-prfun g3_disjunction {a,b:form} {c:form|c==a || c==b} (G3 (nil |- mks (a \disj b))): G3 (nil |- mks c)
+praxi g3_disjunction {a,b:form} (G3 (nil |- mks (a \disj b))): [c:form|c==a||c==b] G3 (nil |- mks c)
 
+prfun lemma_g3_cut {g:seqs} {a:form} {c:form} (G3 (g |- mks a), G3 (g+mk(a) |- mks c)): G3 (g |- mks c)
 
 //praxi lemma_com_disj {g:seqs} {a,b:form} (derive (g |- mks (a \disj b))): derive (g |- mks (b \disj a))
 //prfun lemma_lem {a:form} (): derive (nil |- mks (neg(a) \disj a))

@@ -4,13 +4,13 @@
 datasort BagElt = (* *)
 sortdef elt = BagElt
 
-stacst eq_elt_elt: (elt, elt) -> bool
-stadef neq_elt_elt (a:elt, b:elt) = ~(a==b)
+//stacst eq_elt_elt: (elt, elt) -> bool
+//stadef neq_elt_elt (a:elt, b:elt) = ~(a==b)
 
-stadef == = eq_elt_elt
-stadef != = neq_elt_elt
+//stadef == = eq_elt_elt
+//stadef != = neq_elt_elt
 
-praxi lemma_elt_eq {e:elt} (): [e == e] unit_p
+//praxi lemma_elt_eq {e:elt} (): [e == e] unit_p
 
 datasort Bag = (* *)
 sortdef bag = Bag 
@@ -51,7 +51,7 @@ stadef - = del
 stadef - = dif
 stadef * = cap
 stadef == = eq
-stadef ~= = bag_neq
+stadef != = bag_neq
 
 praxi lemma_car_nat {g:bag} {i:elt} (): [car (g, i) >= 0] unit_p
 praxi lemma_size_nat {g:bag} (): [size g >= 0] unit_p
