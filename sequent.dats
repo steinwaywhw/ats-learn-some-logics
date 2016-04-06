@@ -361,7 +361,7 @@ primplement lemma_g3_cut {g} {c} {cut} {m,n} (fst, snd) = let
 				    goal: g |- c
 				*) 
 				(
-				case- fst of 
+				case+ fst of 
 				| g3_conjr {g}{a0,b0}{m0,n0} (pf00, _) => 
 					let 
 						(* pf: g + a1 |- cut *)
@@ -371,15 +371,37 @@ primplement lemma_g3_cut {g} {c} {cut} {m,n} (fst, snd) = let
 					in 
 						ih {g}{c}{a0}{m0,i} (pf00, pf)
 					end 
-//				| g3_axi {g}{a} ()                     =/=> ()
-//				| g3_botl {g}{c} ()                    =/=> ()
-//				| g3_disjr1 {g}{a,b}{n} (proof)        =/=> ()
-//				| g3_disjr2 {g}{a,b}{n} (proof)        =/=> ()
-//				| g3_implr {g}{a,b}{n} (proof)         =/=> ()
-//				| g3_disjl {g}{a,b}{c}{m,n} (fst, snd) =/=> ()
-//				| g3_impll {g}{a,b}{c}{m,n} (fst, snd) =/=> ()
-//				| g3_conjl1 {g}{a,b}{c}{n} (proof)     =/=> ()
-//				| g3_conjl2 {g}{a,b}{c}{n} (proof)     =/=> ()
+
+				| g3_conjl1 {g}{a0,b0}{cut}{n0} (pf0) =>>
+					let 
+						prval [i:int] pf = ih {g+mk(a0)}{c}{cut}{n0,n} (pf0, lemma_g3_wk {g+mk(cut)}{c}{a0}{n} snd)
+					in 
+						g3_conjl1 {g}{a0,b0}{c}{i} pf 
+					end 
+
+				| g3_conjl2 {g}{a0,b0}{cut}{n0} (pf0) =>>
+					let 
+						prval [i:int] pf = ih {g+mk(b0)}{c}{cut}{n0,n} (pf0, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_conjl2 {g}{a0,b0}{c}{i} pf 
+					end 
+				
+
+				| g3_disjl {g}{a0,b0}{cut}{m0,n0} (pf00, pf01) =>> 
+					let 
+						prval [i:int] pf1 = ih {g+mk(a0)}{c}{cut}{m0,n} (pf00, lemma_g3_wk {g+mk(cut)}{c}{a0}{n} snd)
+						prval [j:int] pf2 = ih {g+mk(b0)}{c}{cut}{n0,n} (pf01, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_disjl {g}{a0,b0}{c}{i,j} (pf1, pf2)
+					end 
+
+				
+				| g3_impll {g}{a0,b0}{cut}{m0,n0} (pf00, pf01) =>> 
+					let 
+						prval [i:int] pf = ih {g+mk(b0)}{c}{cut}{n0,n} (pf01, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_impll {g}{a0,b0}{c}{m0,i} (pf00, pf)
+					end
 
 				| _ =/=>> ()
 				)
@@ -396,7 +418,7 @@ primplement lemma_g3_cut {g} {c} {cut} {m,n} (fst, snd) = let
 				end 
 			else 
 				(
-				case- fst of 
+				case+ fst of 
 				| g3_conjr {g}{a0,b0}{m0,n0} (_, pf01) => 
 					let 
 						(* pf: g + a1 |- cut *)
@@ -406,6 +428,37 @@ primplement lemma_g3_cut {g} {c} {cut} {m,n} (fst, snd) = let
 					in 
 						ih {g}{c}{b0}{n0,i} (pf01, pf)
 					end 
+				| g3_conjl1 {g}{a0,b0}{cut}{n0} (pf0) =>>
+					let 
+						prval [i:int] pf = ih {g+mk(a0)}{c}{cut}{n0,n} (pf0, lemma_g3_wk {g+mk(cut)}{c}{a0}{n} snd)
+					in 
+						g3_conjl1 {g}{a0,b0}{c}{i} pf 
+					end 
+
+				| g3_conjl2 {g}{a0,b0}{cut}{n0} (pf0) =>>
+					let 
+						prval [i:int] pf = ih {g+mk(b0)}{c}{cut}{n0,n} (pf0, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_conjl2 {g}{a0,b0}{c}{i} pf 
+					end 
+				
+
+				| g3_disjl {g}{a0,b0}{cut}{m0,n0} (pf00, pf01) =>> 
+					let 
+						prval [i:int] pf1 = ih {g+mk(a0)}{c}{cut}{m0,n} (pf00, lemma_g3_wk {g+mk(cut)}{c}{a0}{n} snd)
+						prval [j:int] pf2 = ih {g+mk(b0)}{c}{cut}{n0,n} (pf01, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_disjl {g}{a0,b0}{c}{i,j} (pf1, pf2)
+					end 
+
+				
+				| g3_impll {g}{a0,b0}{cut}{m0,n0} (pf00, pf01) =>> 
+					let 
+						prval [i:int] pf = ih {g+mk(b0)}{c}{cut}{n0,n} (pf01, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_impll {g}{a0,b0}{c}{m0,i} (pf00, pf)
+					end
+	
 				| _ =/=>> () 
 				)
 
@@ -436,7 +489,7 @@ primplement lemma_g3_cut {g} {c} {cut} {m,n} (fst, snd) = let
 					goal: g |- c
 				*)
 				(
-				case- fst of 
+				case+ fst of 
 				| g3_disjr1 {g}{a0,b0}{n0} pf0 => 
 					let 
 						prval fsta = lemma_g3_wk {g}{cut}{a1}{m} fst 
@@ -450,7 +503,38 @@ primplement lemma_g3_cut {g} {c} {cut} {m,n} (fst, snd) = let
 						prval [i:int] pf = ih {g+mk(b1)}{c}{cut}{m,n1} (fstb, pf11)
 					in 
 						ih {g}{c}{b0}{n0,i} (pf0, pf)
+					end
+				| g3_conjl1 {g}{a0,b0}{cut}{n0} (pf0) =>>
+					let 
+						prval [i:int] pf = ih {g+mk(a0)}{c}{cut}{n0,n} (pf0, lemma_g3_wk {g+mk(cut)}{c}{a0}{n} snd)
+					in 
+						g3_conjl1 {g}{a0,b0}{c}{i} pf 
 					end 
+
+				| g3_conjl2 {g}{a0,b0}{cut}{n0} (pf0) =>>
+					let 
+						prval [i:int] pf = ih {g+mk(b0)}{c}{cut}{n0,n} (pf0, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_conjl2 {g}{a0,b0}{c}{i} pf 
+					end 
+				
+
+				| g3_disjl {g}{a0,b0}{cut}{m0,n0} (pf00, pf01) =>> 
+					let 
+						prval [i:int] pf1 = ih {g+mk(a0)}{c}{cut}{m0,n} (pf00, lemma_g3_wk {g+mk(cut)}{c}{a0}{n} snd)
+						prval [j:int] pf2 = ih {g+mk(b0)}{c}{cut}{n0,n} (pf01, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_disjl {g}{a0,b0}{c}{i,j} (pf1, pf2)
+					end 
+
+				
+				| g3_impll {g}{a0,b0}{cut}{m0,n0} (pf00, pf01) =>> 
+					let 
+						prval [i:int] pf = ih {g+mk(b0)}{c}{cut}{n0,n} (pf01, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_impll {g}{a0,b0}{c}{m0,i} (pf00, pf)
+					end
+ 
 				| _ =/=>> ()
 				)
 
@@ -481,7 +565,7 @@ primplement lemma_g3_cut {g} {c} {cut} {m,n} (fst, snd) = let
 					fst: g |- cut       snd: g1(g + a1->b1 (cut)) |- c
 				*)
 				( 			
-				case- fst of 
+				case+ fst of 
 				| g3_implr {g}{a0,b0}{n0} (pf0) => 
 					let 
 						(* pf1: g |- a1 *)
@@ -496,6 +580,37 @@ primplement lemma_g3_cut {g} {c} {cut} {m,n} (fst, snd) = let
 					in 
 						ih {g}{c}{b1}{i,j} (pf1, pf2)
 					end
+				| g3_conjl1 {g}{a0,b0}{cut}{n0} (pf0) =>>
+					let 
+						prval [i:int] pf = ih {g+mk(a0)}{c}{cut}{n0,n} (pf0, lemma_g3_wk {g+mk(cut)}{c}{a0}{n} snd)
+					in 
+						g3_conjl1 {g}{a0,b0}{c}{i} pf 
+					end 
+
+				| g3_conjl2 {g}{a0,b0}{cut}{n0} (pf0) =>>
+					let 
+						prval [i:int] pf = ih {g+mk(b0)}{c}{cut}{n0,n} (pf0, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_conjl2 {g}{a0,b0}{c}{i} pf 
+					end 
+				
+
+				| g3_disjl {g}{a0,b0}{cut}{m0,n0} (pf00, pf01) =>> 
+					let 
+						prval [i:int] pf1 = ih {g+mk(a0)}{c}{cut}{m0,n} (pf00, lemma_g3_wk {g+mk(cut)}{c}{a0}{n} snd)
+						prval [j:int] pf2 = ih {g+mk(b0)}{c}{cut}{n0,n} (pf01, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_disjl {g}{a0,b0}{c}{i,j} (pf1, pf2)
+					end 
+
+				
+				| g3_impll {g}{a0,b0}{cut}{m0,n0} (pf00, pf01) =>> 
+					let 
+						prval [i:int] pf = ih {g+mk(b0)}{c}{cut}{n0,n} (pf01, lemma_g3_wk {g+mk(cut)}{c}{b0}{n} snd)
+					in 
+						g3_impll {g}{a0,b0}{c}{m0,i} (pf00, pf)
+					end
+
 				| _ =/=>> ()
 				)		
 in 
