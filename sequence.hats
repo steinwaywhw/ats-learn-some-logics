@@ -4,14 +4,6 @@
 datasort BagElt = (* *)
 sortdef elt = BagElt
 
-//stacst eq_elt_elt: (elt, elt) -> bool
-//stadef neq_elt_elt (a:elt, b:elt) = ~(a==b)
-
-//stadef == = eq_elt_elt
-//stadef != = neq_elt_elt
-
-//praxi lemma_elt_eq {e:elt} (): [e == e] unit_p
-
 datasort Bag = (* *)
 sortdef bag = Bag 
 

@@ -21,9 +21,20 @@ RMF=rm -f
 # cleanall:: clean
 
 
-tc: sequent_tc
+tc: sequent_tc cml_tc
 
 
 
 sequent_tc: sequent.dats 
+	# $(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -smt2 -in
+	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | cvc4 --lang smt2
+
+cml_tc: cml.dats
+	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -smt2 -in
+
+cml2_tc: cml2.dats
+	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -smt2 -in
+
+
+list_tc: list.dats 
 	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -smt2 -in

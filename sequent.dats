@@ -86,7 +86,7 @@ primplement lemma_g3_cut {g} {c} {cut} {m,n} (fst, snd) = let
 		(* 
 			axiom and botl cases
 		*)
-		| (g3_axi {g}{cut} (), _) =>> 
+		| (g3_axi {g}{cut} (), _) =>
 			(*
 				fst: g |- cut  snd: g + cut |- c
 				----------------------------------------
@@ -96,7 +96,7 @@ primplement lemma_g3_cut {g} {c} {cut} {m,n} (fst, snd) = let
 			*)
 			lemma_g3_ctr {g+mk(cut)}{c}{cut}{n} snd
 
-		| (_, g3_axi {g1}{c} ()) =>>
+		| (_, g3_axi {g1}{c} ()) =>
 			(*
 				fst: g |- cut     snd: g + cut |- c
 				-----------------------------------
