@@ -3,42 +3,45 @@ staload "./cml.sats"
 infix |- 
 
 
-//prval _ = $solver_assert lemma_mk_role_inj
-//prval _ = $solver_assert lemma_mk_role_bij
-//prval _ = $solver_assert lemma_seqs_hd
-//prval _ = $solver_assert lemma_seqs_tl
+
+//extern praxi lemma_test {1==2} (): unit_p
 
 prval _ = $solver_assert lemma_bag_car_nat
 prval _ = $solver_assert lemma_bag_size_nat
 prval _ = $solver_assert lemma_bag_size_empty
-prval _ = $solver_assert lemma_bag_size_add
-prval _ = $solver_assert lemma_bag_size_cup
-
-prval _ = $solver_assert lemma_bag_sub_emp
-prval _ = $solver_assert lemma_bag_sub_sub
-prval _ = $solver_assert lemma_bag_sub_cap
-prval _ = $solver_assert lemma_bag_sub_cup2
-prval _ = $solver_assert lemma_bag_sub_cap2
-prval _ = $solver_assert lemma_bag_sub_self
-
-//prval _ = $solver_assert lemma_bag_add_bag 
-//prval _ = $solver_assert lemma_bag_add_elt 
-//prval _ = $solver_assert lemma_bag_cup_add
-//prval _ = $solver_assert lemma_bag_cup_del
-//prval _ = $solver_assert lemma_bag_add_del
+//prval _ = $solver_assert lemma_bag_size_add
+//prval _ = $solver_assert lemma_bag_size_cup
 
 prval _ = $solver_assert lemma_set_size_nat
 prval _ = $solver_assert lemma_set_size_empty
-prval _ = $solver_assert lemma_set_size_add1
-prval _ = $solver_assert lemma_set_size_add2
-prval _ = $solver_assert lemma_set_sub_emp
-prval _ = $solver_assert lemma_set_sub_sub
-prval _ = $solver_assert lemma_set_sub_cap
-prval _ = $solver_assert lemma_set_sub_cup
-prval _ = $solver_assert lemma_set_sub_cap2
-prval _ = $solver_assert lemma_set_sub_cup2
-prval _ = $solver_assert lemma_set_sub_self
-prval _ = $solver_assert lemma_set_com
+//prval _ = $solver_assert lemma_set_size_add
+
+
+
+//prval _ = $solver_assert lemma_bag_sub_emp
+//prval _ = $solver_assert lemma_bag_sub_self
+//prval _ = $solver_assert lemma_bag_sub_sub
+//prval _ = $solver_assert lemma_bag_sub_cap
+//prval _ = $solver_assert lemma_bag_sub_cup2
+//prval _ = $solver_assert lemma_bag_sub_cap2
+
+
+//prval _ = $solver_assert lemma_set_sub_emp
+//prval _ = $solver_assert lemma_set_sub_self
+//prval _ = $solver_assert lemma_set_sub_sub
+//prval _ = $solver_assert lemma_set_sub_cap
+//prval _ = $solver_assert lemma_set_sub_cup
+//prval _ = $solver_assert lemma_set_sub_cap2
+//prval _ = $solver_assert lemma_set_sub_cup2
+
+//prval _ = $solver_assert lemma_set_com_law
+//prval _ = $solver_assert lemma_set_com_sub
+//prval _ = $solver_assert lemma_set_com_emp
+//prval _ = $solver_assert lemma_set_com_uni
+//prval _ = $solver_assert lemma_set_com_inv
+
+//prval _ = $solver_assert lemma_set_com_demorgan
+
 
 prval _ = $solver_assert lemma_mk_iform_inj
 prval _ = $solver_assert lemma_mk_iform_bij
@@ -49,20 +52,624 @@ prval _ = $solver_assert lemma_form_size_nat
 prval _ = $solver_assert lemma_form_size_atom
 prval _ = $solver_assert lemma_form_size_conj
 
- 
 
-extern praxi lemma_split_ctr {U:roles} {G:seqs} {R:roles|sub(U,R)} {A:form} {R0:roles|sub(R,R0)&&mem(G,mki(R0,A))} {m:nat} (CML (U, m, nil |- G + mki(R,A))): [i:int] CML (U, i, nil |- G + mki(R-R0,A))
+
+primplement lemma_init_member {U}{G}{p}{R}{A} (init) = 
+	case+ init of 
+	| cml_init_zero {p} => false 
+	| cml_init_more {r}{g}{p}{r0} init => 
+		sif mki(r0,p) == mki(R,A)
+		then true
+		else lemma_init_member {r}{g}{p}{R}{A} init
+
+primplement lemma_init_remove {U}{G}{p}{R}{A} (init) = let 
+	prval _ = lemma_init_form {U}{G}{p}{R}{A} init 
+in 
+	case+ init of 
+	| cml_init_zero {p} =/=> ()
+	| cml_init_more {r}{g}{p}{r0} pf => 
+		sif R == r0 
+		then pf 
+		else let 
+			prval _ = lemma_init_role {U}{G}{p}{R,r0} init
+		in 
+			cml_init_more {r-R}{g-mki(R,A)}{p}{r0} (lemma_init_remove {r}{g}{p}{R}{A} pf)
+		end 
+end
+
+primplement lemma_init_merge {U1,U2}{G1,G2}{p} (fst, snd) = 
+	case+ fst of 
+	| cml_init_zero {p} => snd 
+	| cml_init_more {r}{g}{p}{r0} fst => cml_init_more {r+U2}{g+G2}{p}{r0} (lemma_init_merge {r,U2}{g,G2}{p} (fst, snd))
+
+
+
+
+//primplement lemma_wk {U}{G}{R}{A}{M} (pf) = let 
+//	prfun ih {U:roles} {G:seqs} {R:roles|sub(U,R)} {A:form} {M:nat} .<M>. (pf: CML (U, M, nil |- G)): CML (U, M, nil |- G + mki(R,A)) = 
+//		case+ pf of 
+//		| cml_axi {U}{g}{gi}{p} init => cml_axi {U}{g+mki(R,A)}{gi}{p} init 
+
+//in 
+//		ih {U}{G}{R}{A}{M} pf
+//end 
+
+
+
+primplement lemma_2cut_spill {U}{G}{R1,R2}{A}{M,N} (fst, snd) = let 
+	prfun is_principal {p:belt} {a:belt} .<>. (): bool (p==a) = sif p == a then true else false
+
+	prfun ih {U:roles} {G:seqs} {R1,R2:roles|sub(U,R1)&&sub(U,R2)&&disj(U-R1,U-R2)} {A:form} {M,N:nat} .<size(A),M+N>.
+		(fst: CML (U, M, nil |- G + mki(R1,A)), snd: CML (U, N, nil |- G + mki(R2,A))): [I:nat] CML (U, I, nil |- G + mki(R1*R2,A)) = 
+
+		sif is_atom A 
+		then 
+			case+ (fst, snd) of 
+			| (cml_conj_n1 {U}{g}{r}{rr}{a,b}{m} pf, _) => 
+				(*
+					pf: g(conj(rr,a,b)[r]) + a[r]                           
+					-----------------------------                           
+					fst: G + A[R1] = g                      snd: G + A[R2]
+					-------------------------------------------------------
+					goal: G + A[R1*R2]
+				*)
+				let 
+					prval snd_ar = lemma_wk {U}{G+mki(R2,A)}{r}{a} snd 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (pf, snd_ar)
+				in 
+					cml_conj_n1 {U}{g-mki(R1,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i} G_ar
+				end 
+
+			| (cml_conj_n2 {U}{g}{r}{rr}{a,b}{n} pf, _) => 
+				let 
+					prval snd_br = lemma_wk {U}{G+mki(R2,A)}{r}{b} snd 
+					prval [i:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (pf, snd_br)
+				in 
+					cml_conj_n2 {U}{g-mki(R1,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i} G_br
+				end 
+
+			| (_, cml_conj_n1 {U}{g}{r}{rr}{a,b}{m} pf) => 
+				let 
+					prval fst_ar = lemma_wk {U}{G+mki(R1,A)}{r}{a} fst 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (fst_ar, pf)
+				in 
+					cml_conj_n1 {U}{g-mki(R2,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i} G_ar
+				end 
+
+			| (_, cml_conj_n2 {U}{g}{r}{rr}{a,b}{n} pf) => 
+				let 
+					prval fst_ar = lemma_wk {U}{G+mki(R1,A)}{r}{b} fst 
+					prval [i:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (fst_ar, pf)
+				in 
+					cml_conj_n2 {U}{g-mki(R2,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i} G_br
+				end 
+
+			| (cml_conj_p {U}{g}{r}{rr}{a,b}{m,n} (pf1, pf2), _) => 
+				let 
+					prval snd_ar = lemma_wk {U}{G+mki(R2,A)}{r}{a} snd 
+					prval snd_br = lemma_wk {U}{G+mki(R2,A)}{r}{b} snd 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (pf1, snd_ar)
+					prval [j:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (pf2, snd_br)
+				in 
+					cml_conj_p {U}{g-mki(R1,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i,j} (G_ar, G_br)
+				end 
+
+			| (_, cml_conj_p {U}{g}{r}{rr}{a,b}{m,n} (pf1, pf2)) => 
+				let 
+					prval fst_ar = lemma_wk {U}{G+mki(R1,A)}{r}{a} fst 
+					prval fst_br = lemma_wk {U}{G+mki(R1,A)}{r}{b} fst 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (fst_ar, pf1)
+					prval [j:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (fst_br, pf2)
+				in 
+					cml_conj_p {U}{g-mki(R2,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i,j} (G_ar, G_br)
+				end 
+
+			| (cml_axi {U}{g1}{gi1}{p1} init1, cml_axi {U}{g2}{gi2}{p2} init2) =>>
+
+				if ~lemma_init_member {U}{gi1}{p1}{R1}{A} init1
+				then cml_axi {U}{g1-mki(R1,A)+mki(R1*R2,A)}{gi1}{p1} init1 
+				else if ~lemma_init_member {U}{gi2}{p2}{R2}{A} init2 
+				then cml_axi {U}{g2-mki(R2,A)+mki(R1*R2,A)}{gi2}{p2} init2
+				else
+					(*
+						init1: CML_INIT (U,gi1,A)         init2: CML_INIT (U,gi2,A)
+						--------------------------        ---------------------------
+						fst: G + A[R1] = g1(gi1(A[R1]))   snd: G + A[R2] = g2(gi2(A[R2]))
+						-----------------------------------------------------------------------------------------
+						goal: G + A[R1*R2]
+
+						G + A[R1] = g1' + gi1 (A[R1])
+						G + A[R2] = g2' + gi2 (A[R2])
+					*)
+					let 
+						prval _ = lemma_init_form {U}{gi1}{p1}{R1}{A} init1
+						prval _ = lemma_init_form {U}{gi2}{p2}{R2}{A} init2
+						prval init1 = lemma_init_remove {U}{gi1}{p1}{R1}{A} init1 
+						prval init2 = lemma_init_remove {U}{gi2}{p2}{R2}{A} init2 
+						prval _ = lemma_init_seqs {U-R1,U-R2}{gi1-mki(R1,A),gi2-mki(R2,A)}{A} (init1, init2)
+
+						(* init = U-R1 + U-R2, missing R1*R2 right now *)
+						prval init = lemma_init_merge {U-R1,U-R2}{gi1-mki(R1,A),gi2-mki(R2,A)}{A} (init1, init2)
+
+						(* prove R1*R2 + U-R1 + U-R2 = U, all disjoint *)
+						prval _ = lemma_set_com_demorgan {U,U-R1,U-R2} ()
+						(* prove A[R1*R2] is not in gi1-A[R1] or gi2-A[R2] *)
+						prval _ = lemma_init_role_neg {(U-R1)+(U-R2)}{(gi1-mki(R1,A))+(gi2-mki(R2,A))}{A}{R1*R2}{A} (init)
+
+						(* add back A[R1*R2] *)
+						prval init = cml_init_more {(U-R1)+(U-R2)}{(gi1-mki(R1,A))+(gi2-mki(R2,A))}{A}{R1*R2} init
+					in 
+						cml_axi {U}{G+mki(R1*R2,A)}{(gi1-mki(R1,A))+(gi2-mki(R2,A))+mki(R1*R2,A)}{A} init
+					end 
+		else
+			case+ (fst, snd) of 
+			| (cml_axi {U}{g1}{gi1}{p1} init, _) => let prval _ = lemma_init_form_neg {U}{gi1}{p1}{R1}{A} init in cml_axi {U}{g1-mki(R1,A)+mki(R1*R2,A)}{gi1}{p1} init end
+			| (_, cml_axi {U}{g2}{gi2}{p2} init) => let prval _ = lemma_init_form_neg {U}{gi2}{p2}{R2}{A} init in cml_axi {U}{g2-mki(R2,A)+mki(R1*R2,A)}{gi2}{p2} init end
+
+			| (cml_conj_n1 {U}{g}{r}{rr}{a,b}{m} pf, _) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R1,A)} () => 
+				let 
+					prval snd_ar = lemma_wk {U}{G+mki(R2,A)}{r}{a} snd 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (pf, snd_ar)
+				in 
+					cml_conj_n1 {U}{g-mki(R1,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i} G_ar
+				end 
+
+			| (cml_conj_n2 {U}{g}{r}{rr}{a,b}{n} pf, _) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R1,A)} () => 
+				let 
+					prval snd_br = lemma_wk {U}{G+mki(R2,A)}{r}{b} snd 
+					prval [i:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (pf, snd_br)
+				in 
+					cml_conj_n2 {U}{g-mki(R1,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i} G_br
+				end 
+
+			| (_, cml_conj_n1 {U}{g}{r}{rr}{a,b}{m} pf) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R2,A)} () =>  
+				let 
+					prval fst_ar = lemma_wk {U}{G+mki(R1,A)}{r}{a} fst 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (fst_ar, pf)
+				in 
+					cml_conj_n1 {U}{g-mki(R2,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i} G_ar
+				end 
+
+			| (_, cml_conj_n2 {U}{g}{r}{rr}{a,b}{n} pf) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R2,A)} () =>  
+				let 
+					prval fst_br = lemma_wk {U}{G+mki(R1,A)}{r}{b} fst 
+					prval [i:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (fst_br, pf)
+				in 
+					cml_conj_n2 {U}{g-mki(R2,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i} G_br
+				end 
+
+			| (cml_conj_p {U}{g}{r}{rr}{a,b}{m,n} (pf1, pf2), _) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R1,A)} () =>   
+				let 
+					prval snd_ar = lemma_wk {U}{G+mki(R2,A)}{r}{a} snd 
+					prval snd_br = lemma_wk {U}{G+mki(R2,A)}{r}{b} snd 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (pf1, snd_ar)
+					prval [j:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (pf2, snd_br)
+				in 
+					cml_conj_p {U}{g-mki(R1,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i,j} (G_ar, G_br)
+				end 
+
+			| (_, cml_conj_p {U}{g}{r}{rr}{a,b}{m,n} (pf1, pf2)) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R2,A)} () =>   
+				let 
+					prval fst_ar = lemma_wk {U}{G+mki(R1,A)}{r}{a} fst 
+					prval fst_br = lemma_wk {U}{G+mki(R1,A)}{r}{b} fst 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (fst_ar, pf1)
+					prval [j:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (fst_br, pf2)
+				in 
+					cml_conj_p {U}{g-mki(R2,A)+mki(R1*R2,A)}{r}{rr}{a,b}{i,j} (G_ar, G_br)
+				end 
+
+			| (cml_conj_n1 {U}{g1}{r1}{rr1}{a1,b1}{m1} pf1, cml_conj_p {U}{g2}{r2}{rr2}{a2,b2}{m2,n2} (pf21, pf22)) 
+				when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =>
+				(*
+													   pf21: G + conj(rr,a,b)[R2] + a[R2] 
+					pf1: G + conj(rr,a,b)[R1] + a[R1]  pf22: G + conj(rr,a,b)[R2] + b[R2]                        
+					---------------------------------  ---------------------------------                         
+					fst: G + conj(rr,a,b)[R1] = g1     snd:  G + conj(rr,a,b)[R2] = g2
+					--------------------------------------------------------------------
+					goal: G + A[R1*R2]
+
+					A is principal in both
+				*)
+				let 
+					stadef a = a1
+					stadef b = b1 
+					stadef rr = rr1
+
+					(* cut (fst + a1[R2], pf21) = G + a[R2] + A[R1*R2] *)
+					prval fst_aR2 = lemma_wk {U}{g1}{R2}{a} fst 
+					prval [i:int] G_aR2 = ih {U}{G+mki(R2,a)}{R1,R2}{conj(rr,a,b)}{M,m2} (fst_aR2, pf21)
+
+					(* cut (snd + a[R1], pf1) = G + a[R1] + A[R1*R2] *)
+					prval snd_aR1 = lemma_wk {U}{g2}{R1}{a} snd 
+					prval [j:int] G_aR1 = ih {U}{G+mki(R1,a)}{R1,R2}{conj(rr,a,b)}{m1,N} (pf1, snd_aR1)
+
+					(* cut (G_aR1, G_aR2) = G + a[R1*R2] + A[R1*R2] *)
+					prval [k:int] pf = ih {U}{G+mki(R1*R2,A)}{R1,R2}{a}{j,i} (G_aR1, G_aR2)
+				in 
+					cml_conj_n1 {U}{G+mki(R1*R2,A)}{R1*R2}{rr}{a,b}{k} pf 
+				end 
+
+			| (cml_conj_n2 {U}{g1}{r1}{rr1}{a1,b1}{n1} pf1, cml_conj_p {U}{g2}{r2}{rr2}{a2,b2}{m2,n2} (pf21, pf22)) 
+				when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =>
+				let 
+					stadef a = a1
+					stadef b = b1 
+					stadef rr = rr1
+
+					(* cut (fst + b[R2], pf22) = G + b[R2] *)
+					prval fst_bR2 = lemma_wk {U}{g1}{R2}{b} fst 
+					prval [i:int] G_bR2 = ih {U}{G+mki(R2,b)}{R1,R2}{conj(rr,a,b)}{M,n2} (fst_bR2, pf22)
+
+					(* cut (snd + b[R1], pf1) = G + b[R1] *)
+					prval snd_bR1 = lemma_wk {U}{g2}{R1}{b} snd 
+					prval [j:int] G_bR1 = ih {U}{G+mki(R1,b)}{R1,R2}{conj(rr,a,b)}{n1,N} (pf1, snd_bR1)
+					
+					prval [k:int] pf = ih {U}{G+mki(R1*R2,A)}{R1,R2}{b}{j,i} (G_bR1, G_bR2)
+				in 
+					cml_conj_n2 {U}{G+mki(R1*R2,A)}{R1*R2}{rr}{a,b}{k} pf
+				end 
+
+			| (cml_conj_p {U}{g1}{r1}{rr1}{a1,b1}{m1,n1} (pf11, pf12), cml_conj_n1 {U}{g2}{r2}{rr2}{a2,b2}{m2} pf2) 
+				when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =>
+				(*
+					pf11: G + conj(rr,a,b)[R1] + a[R1] 								    
+					pf12: G + conj(rr,a,b)[R1] + b[R1]   pf2: G + conj(rr,a,b)[R2] + a[R2]                          
+					----------------------------------   ---------------------------------                          
+					fst:  G + conj(rr,a,b)[R1] = g1      snd: G + conj(rr,a,b)[R2] = g2     
+					--------------------------------------------------------------------
+					goal: G + A[R1*R2]
+
+					A is principal in both
+				*)
+				let 
+					stadef a = a1
+					stadef b = b1 
+					stadef rr = rr1
+
+					(* cut (snd + a[R1], pf11) = G + a[R1] + A[R1*R2] *)
+					prval snd_aR1 = lemma_wk {U}{g2}{R1}{a} snd 
+					prval [i:int] G_aR1 = ih {U}{G+mki(R1,a)}{R1,R2}{conj(rr,a,b)}{m1,N} (pf11, snd_aR1)
+
+					(* cut (fst + a[R2], pf2) = G + a[R2] + A[R1*R2] *)
+					prval fst_aR2 = lemma_wk {U}{g1}{R2}{a} fst 
+					prval [j:int] G_aR2 = ih {U}{G+mki(R2,a)}{R1,R2}{conj(rr,a,b)}{M,m2} (fst_aR2, pf2)
+				
+					prval [k:int] pf = ih {U}{G+mki(R1*R2,A)}{R1,R2}{a}{i,j} (G_aR1, G_aR2)
+				in 
+					cml_conj_n1 {U}{G+mki(R1*R2,A)}{R1*R2}{rr}{a,b}{k} pf 
+				end 
+
+			| (cml_conj_p {U}{g1}{r1}{rr1}{a1,b1}{m1,n1} (pf11, pf12), cml_conj_n2 {U}{g2}{r2}{rr2}{a2,b2}{n2} pf2) 
+				when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =>
+				let 
+					stadef a = a1
+					stadef b = b1 
+					stadef rr = rr1
+
+					(* cut (snd + b[R1], pf11) = G + b[R1] *)
+					prval snd_bR1 = lemma_wk {U}{g2}{R1}{b} snd 
+					prval [i:int] G_bR1 = ih {U}{G+mki(R1,b)}{R1,R2}{conj(rr,a,b)}{n1,N} (pf12, snd_bR1)
+
+					(* cut (fst + b[R2], pf2) = G + b[R2] *)
+					prval fst_bR2 = lemma_wk {U}{g1}{R2}{b} fst 
+					prval [j:int] G_bR2 = ih {U}{G+mki(R2,b)}{R1,R2}{conj(rr,a,b)}{M,n2} (fst_bR2, pf2)
+					
+					prval [k:int] pf = ih {U}{G+mki(R1*R2,A)}{R1,R2}{b}{i,j} (G_bR1, G_bR2)
+				in 
+					cml_conj_n2 {U}{G+mki(R1*R2,A)}{R1*R2}{rr}{a,b}{k} pf
+				end 
+
+			
+			| (_, _) =/=>> 
+				let 
+					extern praxi bottom (): [false] unit_p
+					prval _ = $solver_assert bottom
+				in 
+					()
+				end
+
+in 
+	ih {U}{G}{R1,R2}{A}{M,N} (fst, snd)
+end 
+
+
+
+primplement lemma_2cut {U}{G}{R1,R2}{A}{M,N} (fst, snd) = let 
+
+	prfun is_principal {p:belt} {a:belt} .<>. (): bool (p==a) = sif p == a then true else false
+
+	prfun ih {U:roles} {G:seqs} {R1,R2:roles|fulljoin(U,R1,R2)} {A:form} {M,N:nat} .<size(A),M+N>. 
+		(fst: CML (U, M, nil |- G + mki(R1,A)), snd: CML (U, N, nil |- G + mki(R2,A))): [I:nat] CML (U, I, nil |- G) = 
+
+		sif not (is_atom A) 
+		then 
+			case+ (fst, snd) of 
+			| (cml_axi {U}{g1}{gi1}{p1} init, _) => let prval _ = lemma_init_form_neg {U}{gi1}{p1}{R1}{A} init in cml_axi {U}{g1-mki(R1,A)}{gi1}{p1} init end
+			| (_, cml_axi {U}{g2}{gi2}{p2} init) => let prval _ = lemma_init_form_neg {U}{gi2}{p2}{R2}{A} init in cml_axi {U}{g2-mki(R2,A)}{gi2}{p2} init end
+
+			| (cml_conj_n1 {U}{g}{r}{rr}{a,b}{m} pf, _) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R1,A)} () => 
+				let 
+					prval snd_ar = lemma_wk {U}{G+mki(R2,A)}{r}{a} snd 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (pf, snd_ar)
+				in 
+					cml_conj_n1 {U}{g-mki(R1,A)}{r}{rr}{a,b}{i} G_ar
+				end 
+
+			| (cml_conj_n2 {U}{g}{r}{rr}{a,b}{n} pf, _) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R1,A)} () => 
+				let 
+					prval snd_br = lemma_wk {U}{G+mki(R2,A)}{r}{b} snd 
+					prval [i:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (pf, snd_br)
+				in 
+					cml_conj_n2 {U}{g-mki(R1,A)}{r}{rr}{a,b}{i} G_br
+				end 
+
+			| (_, cml_conj_n1 {U}{g}{r}{rr}{a,b}{m} pf) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R2,A)} () =>  
+				let 
+					prval fst_ar = lemma_wk {U}{G+mki(R1,A)}{r}{a} fst 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (fst_ar, pf)
+				in 
+					cml_conj_n1 {U}{g-mki(R2,A)}{r}{rr}{a,b}{i} G_ar
+				end 
+
+			| (_, cml_conj_n2 {U}{g}{r}{rr}{a,b}{n} pf) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R2,A)} () =>  
+				let 
+					prval fst_br = lemma_wk {U}{G+mki(R1,A)}{r}{b} fst 
+					prval [i:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (fst_br, pf)
+				in 
+					cml_conj_n2 {U}{g-mki(R2,A)}{r}{rr}{a,b}{i} G_br
+				end 
+
+			| (cml_conj_p {U}{g}{r}{rr}{a,b}{m,n} (pf1, pf2), _) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R1,A)} () =>   
+				let 
+					prval snd_ar = lemma_wk {U}{G+mki(R2,A)}{r}{a} snd 
+					prval snd_br = lemma_wk {U}{G+mki(R2,A)}{r}{b} snd 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (pf1, snd_ar)
+					prval [j:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (pf2, snd_br)
+				in 
+					cml_conj_p {U}{g-mki(R1,A)}{r}{rr}{a,b}{i,j} (G_ar, G_br)
+				end 
+
+			| (_, cml_conj_p {U}{g}{r}{rr}{a,b}{m,n} (pf1, pf2)) when ~is_principal {mki(r,conj(rr,a,b))}{mki(R2,A)} () =>   
+				let 
+					prval fst_ar = lemma_wk {U}{G+mki(R1,A)}{r}{a} fst 
+					prval fst_br = lemma_wk {U}{G+mki(R1,A)}{r}{b} fst 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (fst_ar, pf1)
+					prval [j:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (fst_br, pf2)
+				in 
+					cml_conj_p {U}{g-mki(R2,A)}{r}{rr}{a,b}{i,j} (G_ar, G_br)
+				end 
+
+			| (cml_conj_n1 {U}{g1}{r1}{rr1}{a1,b1}{m1} pf1, cml_conj_p {U}{g2}{r2}{rr2}{a2,b2}{m2,n2} (pf21, pf22)) 
+				when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =>
+				(*
+													   pf21: G + conj(rr,a,b)[R2] + a[R2] 
+					pf1: G + conj(rr,a,b)[R1] + a[R1]  pf22: G + conj(rr,a,b)[R2] + b[R2]                        
+					---------------------------------  ---------------------------------                         
+					fst: G + conj(rr,a,b)[R1] = g1     snd:  G + conj(rr,a,b)[R2] = g2
+					--------------------------------------------------------------------
+					goal: G
+
+					A is principal in both
+				*)
+				let 
+					stadef a = a1
+					stadef b = b1 
+					stadef rr = rr1
+
+					(* cut (fst + a1[R2], pf21) = G + a1[R2] *)
+					prval fst_aR2 = lemma_wk {U}{g1}{R2}{a} fst 
+					prval [i:int] G_aR2 = ih {U}{G+mki(R2,a)}{R1,R2}{conj(rr,a,b)}{M,m2} (fst_aR2, pf21)
+
+					(* cut (snd + a[R1], pf1) = G + a[R1] *)
+					prval snd_aR1 = lemma_wk {U}{g2}{R1}{a} snd 
+					prval [j:int] G_aR1 = ih {U}{G+mki(R1,a)}{R1,R2}{conj(rr,a,b)}{m1,N} (pf1, snd_aR1)
+				in 
+					ih {U}{G}{R1,R2}{a}{j,i} (G_aR1, G_aR2)
+				end 
+
+			| (cml_conj_n2 {U}{g1}{r1}{rr1}{a1,b1}{n1} pf1, cml_conj_p {U}{g2}{r2}{rr2}{a2,b2}{m2,n2} (pf21, pf22)) 
+				when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =>
+				let 
+					stadef a = a1
+					stadef b = b1 
+					stadef rr = rr1
+
+					(* cut (fst + b[R2], pf22) = G + b[R2] *)
+					prval fst_bR2 = lemma_wk {U}{g1}{R2}{b} fst 
+					prval [i:int] G_bR2 = ih {U}{G+mki(R2,b)}{R1,R2}{conj(rr,a,b)}{M,n2} (fst_bR2, pf22)
+
+					(* cut (snd + b[R1], pf1) = G + b[R1] *)
+					prval snd_bR1 = lemma_wk {U}{g2}{R1}{b} snd 
+					prval [j:int] G_bR1 = ih {U}{G+mki(R1,b)}{R1,R2}{conj(rr,a,b)}{n1,N} (pf1, snd_bR1)
+				in 
+					ih {U}{G}{R1,R2}{b}{j,i} (G_bR1, G_bR2)
+				end 
+
+			| (cml_conj_p {U}{g1}{r1}{rr1}{a1,b1}{m1,n1} (pf11, pf12), cml_conj_n1 {U}{g2}{r2}{rr2}{a2,b2}{m2} pf2) 
+				when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =>
+				(*
+					pf11: G + conj(rr,a,b)[R1] + a[R1] 								    
+					pf12: G + conj(rr,a,b)[R1] + b[R1]   pf2: G + conj(rr,a,b)[R2] + a[R2]                          
+					----------------------------------   ---------------------------------                          
+					fst:  G + conj(rr,a,b)[R1] = g1      snd: G + conj(rr,a,b)[R2] = g2     
+					--------------------------------------------------------------------
+					goal: G
+
+					A is principal in both
+				*)
+				let 
+					stadef a = a1
+					stadef b = b1 
+					stadef rr = rr1
+
+					(* cut (snd + a[R1], pf11) = G + a[R1] *)
+					prval snd_aR1 = lemma_wk {U}{g2}{R1}{a} snd 
+					prval [i:int] G_aR1 = ih {U}{G+mki(R1,a)}{R1,R2}{conj(rr,a,b)}{m1,N} (pf11, snd_aR1)
+
+					(* cut (fst + a[R2], pf2) = G + a[R2] *)
+					prval fst_aR2 = lemma_wk {U}{g1}{R2}{a} fst 
+					prval [j:int] G_aR2 = ih {U}{G+mki(R2,a)}{R1,R2}{conj(rr,a,b)}{M,m2} (fst_aR2, pf2)
+				in 
+					ih {U}{G}{R1,R2}{a}{i,j} (G_aR1, G_aR2)
+				end 
+
+			| (cml_conj_p {U}{g1}{r1}{rr1}{a1,b1}{m1,n1} (pf11, pf12), cml_conj_n2 {U}{g2}{r2}{rr2}{a2,b2}{n2} pf2) 
+				when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =>
+				let 
+					stadef a = a1
+					stadef b = b1 
+					stadef rr = rr1
+
+					(* cut (snd + b[R1], pf11) = G + b[R1] *)
+					prval snd_bR1 = lemma_wk {U}{g2}{R1}{b} snd 
+					prval [i:int] G_bR1 = ih {U}{G+mki(R1,b)}{R1,R2}{conj(rr,a,b)}{n1,N} (pf12, snd_bR1)
+
+					(* cut (fst + b[R2], pf2) = G + b[R2] *)
+					prval fst_bR2 = lemma_wk {U}{g1}{R2}{b} fst 
+					prval [j:int] G_bR2 = ih {U}{G+mki(R2,b)}{R1,R2}{conj(rr,a,b)}{M,n2} (fst_bR2, pf2)
+				in 
+					ih {U}{G}{R1,R2}{b}{i,j} (G_bR1, G_bR2)
+				end 
+
+			
+			| (_, _) =/=>> 
+				let 
+					extern praxi bottom (): [false] unit_p
+					prval _ = $solver_assert bottom
+				in 
+					()
+				end
+
+//			| (cml_conj_n1 {U}{g1}{r1}{rr1}{a1,b1}{m1} _, cml_conj_n1 {U}{g2}{r2}{rr2}{a2,b2}{m2} _) when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =/=>> ()
+//			| (cml_conj_n1 {U}{g1}{r1}{rr1}{a1,b1}{m1} _, cml_conj_n2 {U}{g2}{r2}{rr2}{a2,b2}{m2} _) when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =/=>> ()
+//			| (cml_conj_n1 {U}{g1}{r1}{rr1}{a1,b1}{m1} _, cml_conj_p {U}{g2}{r2}{rr2}{a2,b2}{m2,n2} _) when ~(is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} ()) =/=>> ()
+
+//			| (cml_conj_n2 {U}{g1}{r1}{rr1}{a1,b1}{m1} _, cml_conj_n1 {U}{g2}{r2}{rr2}{a2,b2}{m2} _) when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =/=>> ()
+//			| (cml_conj_n2 {U}{g1}{r1}{rr1}{a1,b1}{m1} _, cml_conj_n2 {U}{g2}{r2}{rr2}{a2,b2}{m2} _) when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =/=>> ()
+//			| (cml_conj_n2 {U}{g1}{r1}{rr1}{a1,b1}{n1} _, cml_conj_p {U}{g2}{r2}{rr2}{a2,b2}{m2,n2} _) when ~(is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} ()) =/=>> ()
+
+//			| (cml_conj_p {U}{g1}{r1}{rr1}{a1,b1}{m1,n1} _, cml_conj_n1 {U}{g2}{r2}{rr2}{a2,b2}{m2} _) when ~(is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} ()) =/=>> ()
+//			| (cml_conj_p {U}{g1}{r1}{rr1}{a1,b1}{m1,n1} _, cml_conj_n2 {U}{g2}{r2}{rr2}{a2,b2}{n2} _) when ~(is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} ()) =/=>> ()
+//			| (cml_conj_p {U}{g1}{r1}{rr1}{a1,b1}{m1,n1} _, cml_conj_p {U}{g2}{r2}{rr2}{a2,b2}{m2,n2} _) when is_principal {mki(r1,conj(rr1,a1,b1))}{mki(R1,A)} () * is_principal {mki(r2,conj(rr2,a2,b2))}{mki(R2,A)} () =/=>> ()
+
+		else 
+			case+ (fst, snd) of 
+			| (cml_conj_n1 {U}{g}{r}{rr}{a,b}{m} pf, _) => 
+				(*
+					pf: g(conj(rr,a,b)[r]) + a[r]                           
+					-------------------------------------                           
+					fst: G + A[R1] = g                      snd: G + A[R2]
+					-------------------------------------------------------
+					goal: G
+				*)
+				let 
+					prval snd_ar = lemma_wk {U}{G+mki(R2,A)}{r}{a} snd 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (pf, snd_ar)
+				in 
+					cml_conj_n1 {U}{g-mki(R1,A)}{r}{rr}{a,b}{i} G_ar
+				end 
+
+			| (cml_conj_n2 {U}{g}{r}{rr}{a,b}{n} pf, _) => 
+				let 
+					prval snd_br = lemma_wk {U}{G+mki(R2,A)}{r}{b} snd 
+					prval [i:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (pf, snd_br)
+				in 
+					cml_conj_n2 {U}{g-mki(R1,A)}{r}{rr}{a,b}{i} G_br
+				end 
+
+			| (_, cml_conj_n1 {U}{g}{r}{rr}{a,b}{m} pf) => 
+				let 
+					prval fst_ar = lemma_wk {U}{G+mki(R1,A)}{r}{a} fst 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (fst_ar, pf)
+				in 
+					cml_conj_n1 {U}{g-mki(R2,A)}{r}{rr}{a,b}{i} G_ar
+				end 
+
+			| (_, cml_conj_n2 {U}{g}{r}{rr}{a,b}{n} pf) => 
+				let 
+					prval fst_ar = lemma_wk {U}{G+mki(R1,A)}{r}{b} fst 
+					prval [i:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (fst_ar, pf)
+				in 
+					cml_conj_n2 {U}{g-mki(R2,A)}{r}{rr}{a,b}{i} G_br
+				end 
+
+			| (cml_conj_p {U}{g}{r}{rr}{a,b}{m,n} (pf1, pf2), _) => 
+				let 
+					prval snd_ar = lemma_wk {U}{G+mki(R2,A)}{r}{a} snd 
+					prval snd_br = lemma_wk {U}{G+mki(R2,A)}{r}{b} snd 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (pf1, snd_ar)
+					prval [j:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (pf2, snd_br)
+				in 
+					cml_conj_p {U}{g-mki(R1,A)}{r}{rr}{a,b}{i,j} (G_ar, G_br)
+				end 
+
+			| (_, cml_conj_p {U}{g}{r}{rr}{a,b}{m,n} (pf1, pf2)) => 
+				let 
+					prval fst_ar = lemma_wk {U}{G+mki(R1,A)}{r}{a} fst 
+					prval fst_br = lemma_wk {U}{G+mki(R1,A)}{r}{b} fst 
+					prval [i:int] G_ar = ih {U}{G+mki(r,a)}{R1,R2}{A} (fst_ar, pf1)
+					prval [j:int] G_br = ih {U}{G+mki(r,b)}{R1,R2}{A} (fst_br, pf2)
+				in 
+					cml_conj_p {U}{g-mki(R2,A)}{r}{rr}{a,b}{i,j} (G_ar, G_br)
+				end 
+
+			| (cml_axi {U}{g1}{gi1}{p1} init1, cml_axi {U}{g2}{gi2}{p2} init2) =>>
+
+				if ~lemma_init_member {U}{gi1}{p1}{R1}{A} init1
+				then cml_axi {U}{g1-mki(R1,A)}{gi1}{p1} init1 
+				else if ~lemma_init_member {U}{gi2}{p2}{R2}{A} init2 
+				then cml_axi {U}{g2-mki(R2,A)}{gi2}{p2} init2
+				else
+					(*
+						init1: CML_INIT (U,gi1,A)                   init2: CML_INIT (U,gi2,A)
+						--------------------------                  ---------------------------
+						fst: G + A[R1] = g1(gi1(A[R1]))   snd: G + A[R2] = g2(gi2(A[R2]))
+						-----------------------------------------------------------------------------------------
+						goal: G
+
+						G + A[R1] = g1' + gi1 (A[R1])
+						G + A[R2] = g2' + gi2 (A[R2])
+					*)
+					let 
+						prval _ = lemma_init_form {U}{gi1}{p1}{R1}{A} init1
+						prval _ = lemma_init_form {U}{gi2}{p2}{R2}{A} init2
+						prval init1 = lemma_init_remove {U}{gi1}{p1}{R1}{A} init1 
+						prval init2 = lemma_init_remove {U}{gi2}{p2}{R2}{A} init2 
+						prval _ = lemma_init_seqs {U-R1,U-R2}{gi1-mki(R1,A),gi2-mki(R2,A)}{A} (init1, init2)
+						prval init = lemma_init_merge {U-R1,U-R2}{gi1-mki(R1,A),gi2-mki(R2,A)}{A} (init1, init2)
+					in 
+						cml_axi {U}{G}{(gi1-mki(R1,A))+(gi2-mki(R2,A))}{A} init
+					end 
+
+in 
+//	sif mem(G,mki(R1,A))
+//	then lemma_ctr {U}{G+mki(R1,A)}{R1}{A}{M} fst 
+//	else sif mem(G,mki(R2,A))
+//	then lemma_ctr {U}{G+mki(R2,A)}{R2}{A}{N} snd 
+//	else ih {U}{G}{R1,R2}{A}{M,N} (fst, snd)
+	ih {U}{G}{R1,R2}{A}{M,N} (fst, snd)
+
+end 
+
+
+
+
+
+
+
+////
+//extern praxi lemma_split_ctr {U:roles} {G:seqs} {R:roles|sub(U,R)} {A:form} {R0:roles|sub(R,R0)&&mem(G,mki(R0,A))} {m:nat} (CML (U, m, nil |- G + mki(R,A))): [i:int] CML (U, i, nil |- G + mki(R-R0,A))
 //prval _ = $solver_assert lemma_split_ctr
 
 
-extern praxi lemma_init_nil {G:seqs} {R:roles} {p:form|mem(G,mki(emp,p))&&size(p)==1} (CML_INIT (G, R, p)): CML_INIT (G - mki(emp,p), R, p)
-extern praxi lemma_init_only {G:seqs} {R,R1:roles|sub(R,R1)} {p,p1:form|not(p1==p)&&size(p)==1} (CML_INIT (G, R, p)): [not(mem(G, mki(R1,p1)))] unit_p
-extern praxi lemma_init_is {G:seqs} {R,R1:roles|sub(R,R1)} {p,p1:form|mem(G,mki(R1,p1))&&size(p)==1} (CML_INIT (G, R, p)): [p==p1] unit_p
-extern praxi lemma_init_nonoverlap {G:seqs} {R:roles} {p:form|size(p)==1} {R1,R2:roles|sub(R,R1) && sub(R,R2) && not(R1*R2==emp) && mem(G,mki(R1,p))} (CML_INIT (G, R, p)): [not(mem(G,mki(R2,p)))] unit_p
-extern praxi lemma_init_split {G:seqs} {R:roles} {p:form|size(p)==1} {R0,R1,R2:roles|sub(R,R0)&&fulljoin(R0,R1,R2)&&mem(G,mki(R0,p))} (CML_INIT (G, R, p)): CML_INIT (G-mki(R0,p)+mki(R1,p)+mki(R2,p), R, p)
-extern praxi lemma_init_join  {G:seqs} {R:roles} {p:form|size(p)==1} {R0,R1,R2:roles|sub(R,R0)&&fulljoin(R0,R1,R2)&&mem(G,mki(R1,p))&&mem(G,mki(R2,p))} (CML_INIT (G, R, p)): CML_INIT (G+mki(R0,p)-mki(R1,p)-mki(R2,p), R, p)
-extern praxi lemma_init_del {G:seqs} {R:roles} {p:form|size(p)==1} {R0:roles|sub(R,R0)&&mem(G,mki(R0,p))} (CML_INIT (G, R, p)): CML_INIT (G-mki(R0,p), R-R0, p)
-extern praxi lemma_init_replace {G:seqs} {R:roles} {p:form|size(p)==1} {G0:seqs} (CML_INIT (G, R, p)): CML_INIT (G0, R, p)
+//extern praxi lemma_init_nil {G:seqs} {R:roles} {p:form|mem(G,mki(emp,p))&&size(p)==1} (CML_INIT (G, R, p)): CML_INIT (G - mki(emp,p), R, p)
+//extern praxi lemma_init_only {G:seqs} {R,R1:roles|sub(R,R1)} {p,p1:form|not(p1==p)&&size(p)==1} (CML_INIT (G, R, p)): [not(mem(G, mki(R1,p1)))] unit_p
+//extern praxi lemma_init_is {G:seqs} {R,R1:roles|sub(R,R1)} {p,p1:form|mem(G,mki(R1,p1))&&size(p)==1} (CML_INIT (G, R, p)): [p==p1] unit_p
+//extern praxi lemma_init_nonoverlap {G:seqs} {R:roles} {p:form|size(p)==1} {R1,R2:roles|sub(R,R1) && sub(R,R2) && not(R1*R2==emp) && mem(G,mki(R1,p))} (CML_INIT (G, R, p)): [not(mem(G,mki(R2,p)))] unit_p
+//extern praxi lemma_init_split {G:seqs} {R:roles} {p:form|size(p)==1} {R0,R1,R2:roles|sub(R,R0)&&fulljoin(R0,R1,R2)&&mem(G,mki(R0,p))} (CML_INIT (G, R, p)): CML_INIT (G-mki(R0,p)+mki(R1,p)+mki(R2,p), R, p)
+//extern praxi lemma_init_join  {G:seqs} {R:roles} {p:form|size(p)==1} {R0,R1,R2:roles|sub(R,R0)&&fulljoin(R0,R1,R2)&&mem(G,mki(R1,p))&&mem(G,mki(R2,p))} (CML_INIT (G, R, p)): CML_INIT (G+mki(R0,p)-mki(R1,p)-mki(R2,p), R, p)
+//extern praxi lemma_init_del {G:seqs} {R:roles} {p:form|size(p)==1} {R0:roles|sub(R,R0)&&mem(G,mki(R0,p))} (CML_INIT (G, R, p)): CML_INIT (G-mki(R0,p), R-R0, p)
+//extern praxi lemma_init_replace {G:seqs} {R:roles} {p:form|size(p)==1} {G0:seqs} (CML_INIT (G, R, p)): CML_INIT (G0, R, p)
 //extern praxi lemma_init_splitall {G:seqs} {R:roles} {p:form|size(p)==1} {R0:roles|sub(R,R0)&&mem(G,mki(R-R0,p))} (CML_INIT (G, R, p)): [G0:seqs|]
 
 

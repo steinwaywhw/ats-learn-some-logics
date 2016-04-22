@@ -36,24 +36,21 @@ stadef size = bag_size
 
 
 praxi lemma_bag_sub_emp {g:bag} (): [sub(g,bnil)] unit_p
+praxi lemma_bag_sub_self {g:bag} (): [sub(g,g)] unit_p
 praxi lemma_bag_sub_sub {g1,g2,g3:bag|sub(g1,g2)&&sub(g2,g3)} (): [sub(g1,g3)] unit_p
 praxi lemma_bag_sub_cap {g,g1,g2:bag|sub(g,g1)&&sub(g,g2)} (): [sub(g,g1*g2)] unit_p
-//praxi lemma_bag_sub_cup {g,g1,g2:bag|sub(g,g1)&&sub(g,g2)} (): [sub(g,g1+g2)] unit_p
 praxi lemma_bag_sub_cup2 {g1,g2:bag} (): [sub(g1+g2,g1)&&sub(g1+g2,g2)] unit_p
 praxi lemma_bag_sub_cap2 {g1,g2:bag} (): [sub(g1,g1*g2)&&sub(g2,g1*g2)] unit_p
-praxi lemma_bag_sub_self {g:bag} (): [sub(g,g)] unit_p
 
-//praxi lemma_bag_eq_eq {g1,g2,g3:bag|g1==g2&&g2==g3} (): [g1==g3] unit_p
+praxi lemma_bag_car_nat {g:bag} {i:belt} (): [car(g,i) >= 0] unit_p
+praxi lemma_bag_size_nat {g:bag} (): [size(g) >= 0] unit_p
+praxi lemma_bag_size_empty (): [size(bnil)==0] unit_p
+praxi lemma_bag_size_add {g:bag} {e:belt} (): [size(g+e)==size(g)+1] unit_p
+praxi lemma_bag_size_cup {g1,g2:bag} (): [size(g1+g2)==size(g1)+size(g2)] unit_p
 
+//praxi lemma_bag_add_bag {g,g1,g2:bag|g==g1+g2} (): [g-g1==g2&&g-g2==g1] unit_p
+//praxi lemma_bag_add_elt {g,g1:bag} {e:belt|g==g1+e}  (): [g-e==g1] unit_p
 
-praxi lemma_bag_car_nat {g:bag} {i:belt} (): [car (g, i) >= 0] unit_p
-praxi lemma_bag_size_nat {g:bag} (): [size g >= 0] unit_p
-praxi lemma_bag_size_empty (): [size(bag_emp()) == 0] unit_p
-praxi lemma_bag_size_add {g:bag} {e:belt} (): [size(g+e) == size(g)+1] unit_p
-praxi lemma_bag_size_cup {g1,g2:bag} (): [size(g1+g2) == size(g1)+size(g2)] unit_p
-praxi lemma_bag_add_bag {g,g1,g2:bag|g==g1+g2} (): [g-g1==g2&&g-g2==g1] unit_p
-praxi lemma_bag_add_elt {g,g1:bag} {e:belt|g==g1+e}  (): [g-e==g1] unit_p
-
-praxi lemma_bag_cup_add {g1,g2:bag} {e:belt} (): [(g1+e)+g2==(g1+g2)+e] unit_p
-praxi lemma_bag_cup_del {g1,g2:bag} {e:belt|mem(g1,e)} (): [(g1-e)+g2==(g1+g2)-e] unit_p
+//praxi lemma_bag_cup_add {g1,g2:bag} {e:belt} (): [(g1+e)+g2==(g1+g2)+e] unit_p
+//praxi lemma_bag_cup_del {g1,g2:bag} {e:belt|mem(g1,e)} (): [(g1-e)+g2==(g1+g2)-e] unit_p
 //praxi lemma_bag_add_del {g:bag} {e1,e2:belt|mem(g,e1)} (): [(g-e1)+e2==(g+e2)-e1] unit_p
