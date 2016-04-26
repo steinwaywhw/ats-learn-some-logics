@@ -32,12 +32,8 @@ sequent_tc: sequent.dats
 cml_tc: cml.dats
 	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -t:2000 -smt2 -in 2>&1 | tee output | em -fgreen "^unsat" | em "^sat|^timeout|^unknown" #| grep -B1 "unknown"
 
+clml_tc: clml.dats
+	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -t:2000 -smt2 -in 2>&1 | tee output | em -fgreen "^unsat" | em "^sat|^timeout|^unknown" #| grep -B1 "unknown"
+
 see: output
 	cat output | em -fgreen "^unsat" | em "^sat|^unknown"
-
-cml2_tc: cml2.dats
-	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -smt2 -in
-
-
-list_tc: list.dats 
-	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -smt2 -in
