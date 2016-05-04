@@ -21,18 +21,20 @@ RMF=rm -f
 # cleanall:: clean
 
 
-tc: sequent_tc cml_tc
+tc: sequent cml
 
 
+cmld: cml_disj.dats
+	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -t:2000 -smt2 -in 2>&1 | tee output | em -fgreen "^unsat" | em "^sat|^timeout|^unknown" #| grep -B1 "unknown"
 
-sequent_tc: sequent.dats 
+sequent: sequent.dats 
 	# $(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -smt2 -in
 	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | cvc4 --lang smt2
 
-cml_tc: cml.dats
+cml: cml.dats
 	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -t:2000 -smt2 -in 2>&1 | tee output | em -fgreen "^unsat" | em "^sat|^timeout|^unknown" #| grep -B1 "unknown"
 
-clml_tc: clml.dats
+clml: clml.dats
 	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -t:2000 -smt2 -in 2>&1 | tee output | em -fgreen "^unsat" | em "^sat|^timeout|^unknown" #| grep -B1 "unknown"
 
 see: output
