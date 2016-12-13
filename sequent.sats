@@ -1,5 +1,6 @@
 
-#include "sequence.hats"
+//#include "sequence.hats"
+#include "bag.sats"
 
 (* sort definition *)
 

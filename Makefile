@@ -28,8 +28,8 @@ cmld: cml_disj.dats
 	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -t:2000 -smt2 -in 2>&1 | tee output | em -fgreen "^unsat" | em "^sat|^timeout|^unknown" #| grep -B1 "unknown"
 
 sequent: sequent.dats 
-	# $(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -smt2 -in
-	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | cvc4 --lang smt2
+	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -t:2000 -smt2 -in 2>&1 | tee output | em -fgreen "^unsat" | em "^sat|^timeout|^unknown" #| grep -B1 "unknown"
+	# $(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | cvc4 --lang smt2
 
 cml: cml.dats
 	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -t:2000 -smt2 -in 2>&1 | tee output | em -fgreen "^unsat" | em "^sat|^timeout|^unknown" #| grep -B1 "unknown"
@@ -39,3 +39,7 @@ clml: clml.dats
 
 see: output
 	cat output | em -fgreen "^unsat" | em "^sat|^unknown"
+
+dcml: dcml.dats
+	$(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i | tee ./constraints | z3 -t:2000 -smt2 -in 2>&1 | tee output | em -fgreen "^unsat" | em "^sat|^timeout|^unknown" | grep -B3 "unknown" || true
+	# $(PATSOPT) -tc --constraint-export -d $< | $(PATSOLVE) -i 1>./constraits 2>&1 | cat ./constraints | z3 -t:2000 -smt2 -in 2>&1 
